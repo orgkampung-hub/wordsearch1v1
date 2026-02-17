@@ -5,7 +5,7 @@ const { createApp, ref, onMounted } = Vue;
 createApp({
     setup() {
         const screen = ref('login');
-        const mode = ref('multi'); 
+        const mode = ref('single'); 
         const isNameSaved = ref(false);
         const myId = ref('');
         const myName = ref('');
@@ -18,7 +18,6 @@ createApp({
         const myScore = ref(0);
         const opponentScore = ref(0);
         
-        // PASTI: Reset sifar setiap kali setup dijalankan
         const myWins = ref(0);
         const opponentWins = ref(0);
         
@@ -62,9 +61,52 @@ createApp({
             });
         };
 
-        const deleteName = () => {
-            localStorage.removeItem('ws_user_name');
-            window.location.reload();
+        const setupConnection = () => {
+            conn.on('open', () => {
+                screen.value = 'game';
+                mode.value = 'multi';
+                conn.send({ type: 'HANDSHAKE', name: myName.value });
+            });
+
+            conn.on('data', async (data) => {
+                if (data.type === 'HANDSHAKE') {
+                    opponentName.value = data.name;
+                    if (!data.isReply) conn.send({ type: 'HANDSHAKE', name: myName.value, isReply: true });
+                    if (myId.value < conn.peer) await nextGame(true); 
+                }
+                if (data.type === 'START') {
+                    resetGameState();
+                    grid.value = data.grid;
+                    words.value = data.words;
+                    myWins.value = data.winsYou; 
+                    opponentWins.value = data.winsOpp;
+                }
+                if (data.type === 'FOUND') markWordFound(data.start, data.end, data.word, false);
+            });
+        };
+
+        const nextGame = async (isFirst = false) => {
+            if (!isFirst) {
+                if (myScore.value > opponentScore.value) myWins.value++;
+                else if (opponentScore.value > myScore.value) opponentWins.value++;
+            }
+            
+            resetGameState();
+            if (mode.value === 'single') {
+                await createNewGrid();
+            } else if (conn) {
+                await createNewGrid();
+                // Hantar data wins secara relatif
+                conn.send({ 
+                    type: 'START', 
+                    grid: grid.value, 
+                    words: words.value, 
+                    winsHost: myWins.value, 
+                    winsGuest: opponentWins.value,
+                    winsYou: opponentWins.value, // Untuk peranti lawan, win saya adalah win dia
+                    winsOpp: myWins.value
+                });
+            }
         };
 
         const resetGameState = () => {
@@ -84,7 +126,7 @@ createApp({
         const startSinglePlayer = async () => {
             mode.value = 'single';
             screen.value = 'game';
-            myWins.value = 0; opponentWins.value = 0; // RESET MUTLAK
+            myWins.value = 0; opponentWins.value = 0;
             resetGameState();
             await createNewGrid();
         };
@@ -95,60 +137,8 @@ createApp({
             setupConnection();
         };
 
-        const setupConnection = () => {
-            conn.on('open', () => {
-                screen.value = 'game';
-                mode.value = 'multi';
-                // Handshake: Hantar nama sendiri sebaik sahaja open
-                conn.send({ type: 'HANDSHAKE', name: myName.value });
-            });
-
-            conn.on('data', async (data) => {
-                if (data.type === 'HANDSHAKE') {
-                    opponentName.value = data.name;
-                    // Balas balik jika kita yang terima connection
-                    if (myId.value < conn.peer) {
-                        conn.send({ type: 'HANDSHAKE_REPLY', name: myName.value });
-                        await nextGame(true); // Host mulakan game pertama
-                    }
-                }
-                if (data.type === 'HANDSHAKE_REPLY') {
-                    opponentName.value = data.name;
-                }
-                if (data.type === 'START') {
-                    resetGameState();
-                    grid.value = data.grid;
-                    words.value = data.words;
-                    myWins.value = data.winsGuest; 
-                    opponentWins.value = data.winsHost;
-                }
-                if (data.type === 'FOUND') markWordFound(data.start, data.end, data.word, false);
-            });
-        };
-
-        const nextGame = async (isFirst = false) => {
-            if (!isFirst) {
-                if (myScore.value > opponentScore.value) myWins.value++;
-                else if (opponentScore.value > myScore.value) opponentWins.value++;
-            }
-            
-            resetGameState();
-            if (mode.value === 'single') {
-                await createNewGrid();
-            } else {
-                await createNewGrid();
-                conn.send({ 
-                    type: 'START', 
-                    grid: grid.value, 
-                    words: words.value, 
-                    winsHost: myWins.value, 
-                    winsGuest: opponentWins.value 
-                });
-            }
-        };
-
         const handleCellClick = (r, c, char) => {
-            if (foundWords.value.length === words.value.length) return;
+            if (foundWords.value.length === words.value.length && words.value.length > 0) return;
             if (selectedCells.value.length === 0) {
                 selectedCells.value.push({ r, c, char });
             } else {
@@ -157,7 +147,7 @@ createApp({
                 const word = checkWord(start, end);
                 if (word) {
                     markWordFound(start, end, word, true);
-                    if (mode.value === 'multi') conn.send({ type: 'FOUND', start, end, word });
+                    if (mode.value === 'multi' && conn) conn.send({ type: 'FOUND', start, end, word });
                 }
                 selectedCells.value = [];
             }
@@ -193,13 +183,18 @@ createApp({
             }
         };
 
+        const exitGame = () => {
+            window.location.href = window.location.pathname; 
+        };
+
         return { 
             screen, mode, myId, myName, peerIdInput, opponentName, grid, words, isNameSaved,
             myScore, opponentScore, myWins, opponentWins, foundWords, handleCellClick, 
             isSelected: (r, c) => selectedCells.value.some(cell => cell.r === r && cell.c === c),
             isFound: (r, c) => foundCoordinates.value.some(coord => coord.r === r && coord.c === c),
             shouldAnimate: (r, c) => foundCoordinates.value.some(coord => coord.r === r && coord.c === c && coord.animate),
-            startSinglePlayer, connectToPeer, handleLogin, deleteName, nextGame
+            startSinglePlayer, connectToPeer, handleLogin, deleteName: () => { localStorage.clear(); exitGame(); }, 
+            nextGame, exitGame
         };
     }
 }).mount('#app');

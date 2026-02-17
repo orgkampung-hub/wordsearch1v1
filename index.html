@@ -11,21 +11,17 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
-
     <div id="app">
         <div v-if="foundWords.length === words.length && words.length > 0" class="winner-overlay">
             <div class="winner-text">
                 {{ myScore > opponentScore ? 'YOU WIN!' : (myScore < opponentScore ? 'GAME OVER' : 'DRAW!') }}
             </div>
-            <div class="final-scores">
-                SCORE: {{ myScore }} - {{ opponentScore }}
-            </div>
+            <div class="final-scores">SCORE: {{ myScore }} - {{ opponentScore }}</div>
             
-            <button v-if="mode === 'single' || (mode === 'multi' && myId < (peerIdInput || ''))" 
-                    @click="nextGame(false)" class="btn-restart">PUSINGAN SETERUSNYA</button>
-            <p v-else-if="mode === 'multi'" style="color: #00f2ff; margin: 15px 0;">Menunggu Host memulakan game...</p>
-            
-            <button @click="window.location.reload()" class="btn-exit" style="margin-top:10px; border:1px solid #ff3e3e; background:transparent;">TAMAT & RESET WINS</button>
+            <button v-if="mode === 'single' || myId < opponentName" @click="nextGame(false)" class="btn-restart">PUSINGAN SETERUSNYA</button>
+            <p v-else style="color:#00f2ff; margin:15px 0;">Menunggu Host...</p>
+
+            <button @click="exitGame" class="btn-exit" style="margin-top:10px; border:1px solid #ff3e3e; background:transparent;">TAMAT & RESET</button>
         </div>
 
         <div v-if="screen === 'login'" class="screen">
@@ -47,12 +43,10 @@
         <div v-if="screen === 'menu'" class="screen">
             <h1>WORD SEARCH</h1>
             <p>ID ANDA: <b style="color:#00f2ff">{{ myId }}</b></p>
-            
             <div class="mode-selector">
                 <button @click="startSinglePlayer" class="btn-main">Single Player</button>
                 <button @click="mode = 'multi'" class="btn-main">Multiplayer (1v1)</button>
             </div>
-
             <div v-if="mode === 'multi'" class="p2p-box">
                 <input v-model="peerIdInput" type="text" placeholder="ID Lawan" style="text-transform: uppercase;">
                 <button @click="connectToPeer" class="btn-sub">Connect & Play</button>
@@ -82,11 +76,7 @@
                 <div v-for="(row, r) in grid" :key="r" class="grid-row">
                     <div v-for="(char, c) in row" :key="c" 
                          class="cell" 
-                         :class="{ 
-                            selecting: isSelected(r, c), 
-                            found: isFound(r, c),
-                            'animate-found': shouldAnimate(r, c) 
-                         }"
+                         :class="{ selecting: isSelected(r, c), found: isFound(r, c), 'animate-found': shouldAnimate(r, c) }"
                          @click="handleCellClick(r, c, char)">
                         {{ char }}
                     </div>
@@ -94,13 +84,12 @@
             </div>
             
             <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px; width: 100%; align-items: center; padding-bottom: 20px;">
-                <button v-if="foundWords.length === words.length && words.length > 0 && (mode === 'single' || myId < (peerIdInput || ''))" 
+                <button v-if="foundWords.length === words.length && words.length > 0 && (mode === 'single' || myId < opponentName)" 
                         @click="nextGame(false)" class="btn-main">NEXT GAME</button>
-                <button @click="window.location.reload()" class="btn-exit">Keluar</button>
+                <button @click="exitGame" class="btn-exit">Keluar</button>
             </div>
         </div>
     </div>
-
     <script type="module" src="script.js"></script>
 </body>
 </html>
