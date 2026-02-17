@@ -8,20 +8,20 @@
     width: 100vw;
     padding: 10px;
     box-sizing: border-box;
-    overflow: hidden; /* Elak scroll satu skrin */
+    overflow: hidden;
     background-color: #050505;
 }
 
-/* Scoreboard dengan Match Wins */
+/* Scoreboard Utama */
 .scoreboard {
     display: flex;
     justify-content: space-around;
     align-items: center;
     width: 100%;
     margin-bottom: 15px;
-    background: rgba(0, 242, 255, 0.1);
-    padding: 12px 5px;
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 15px 5px;
+    border-radius: 15px;
     border: 1px solid rgba(0, 242, 255, 0.2);
 }
 
@@ -30,34 +30,54 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
+    flex: 1;
 }
 
 .team .name {
     font-size: 0.85rem;
     font-weight: bold;
     color: #fff;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
+/* Skor Pusingan (Besar & Glow) */
 .team .stats b {
-    font-size: 1.5rem;
+    font-size: 2.2rem;
     color: #00f2ff;
-    text-shadow: 0 0 10px #00f2ff;
+    text-shadow: 0 0 10px #00f2ff, 0 0 20px rgba(0, 242, 255, 0.5);
+    line-height: 1;
 }
 
-.team .stats small {
-    display: block;
-    font-size: 0.65rem;
-    color: #ff00ff;
-    margin-top: 2px;
+/* KOTAK WINS (Sangat Menyerlah) */
+.win-badge {
+    margin-top: 10px;
+    background: #ff00ff; /* Warna Neon Magenta */
+    color: #fff;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    box-shadow: 0 0 15px #ff00ff;
+    border: 2px solid #fff;
+    text-transform: uppercase;
+    animation: pulse-win 2s infinite;
+}
+
+@keyframes pulse-win {
+    0% { transform: scale(1); box-shadow: 0 0 10px #ff00ff; }
+    50% { transform: scale(1.1); box-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff; }
+    100% { transform: scale(1); box-shadow: 0 0 10px #ff00ff; }
 }
 
 .vs {
-    font-weight: bold;
-    color: #fff;
-    opacity: 0.5;
+    font-weight: 900;
+    font-size: 1.2rem;
+    color: #ff00ff;
+    text-shadow: 0 0 5px #ff00ff;
     font-style: italic;
+    padding: 0 10px;
 }
 
 /* SENARAI PERKATAAN */
@@ -94,7 +114,7 @@
     opacity: 0.8;
 }
 
-/* GRID (Ngam saiz phone) */
+/* GRID */
 .grid {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
@@ -123,19 +143,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 4.8vw; /* Saiz huruf ikut skrin */
+    font-size: 4.8vw;
     font-weight: 900;
     border-radius: 4px;
     user-select: none;
     touch-action: manipulation;
-    transition: background 0.2s;
 }
 
 @media (min-width: 400px) {
     .cell { font-size: 1.3rem; }
 }
 
-/* Status Warna & Animasi */
 .selecting {
     background: #ff00ff !important;
     color: #fff !important;
@@ -149,7 +167,6 @@
     box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
 }
 
-/* Animasi Zoom/Pop semasa dijumpai */
 .animate-found {
     animation: found-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     z-index: 10;
@@ -173,10 +190,4 @@
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
-    cursor: pointer;
-}
-
-.btn-exit:active {
-    background: #ff3e3e;
-    color: #fff;
 }
