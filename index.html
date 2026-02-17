@@ -20,11 +20,12 @@
             <div class="final-scores">
                 SCORE: {{ myScore }} - {{ opponentScore }}
             </div>
-            <button v-if="mode === 'single' || (mode === 'multi' && myId < peerIdInput)" 
-                    @click="nextGame" class="btn-restart">PUSINGAN SETERUSNYA</button>
-            <p v-else-if="mode === 'multi'" style="color: #00f2ff; margin: 10px 0;">Menunggu Host memulakan game...</p>
             
-            <button @click="window.location.reload()" class="btn-exit" style="margin-top:10px; border:none; background:transparent;">TAMAT</button>
+            <button v-if="mode === 'single' || (mode === 'multi' && myId < (peerIdInput || ''))" 
+                    @click="nextGame(false)" class="btn-restart">PUSINGAN SETERUSNYA</button>
+            <p v-else-if="mode === 'multi'" style="color: #00f2ff; margin: 15px 0;">Menunggu Host memulakan game...</p>
+            
+            <button @click="window.location.reload()" class="btn-exit" style="margin-top:10px; border:1px solid #ff3e3e; background:transparent;">TAMAT & RESET WINS</button>
         </div>
 
         <div v-if="screen === 'login'" class="screen">
@@ -38,7 +39,7 @@
                     <p>Selamat Datang,</p>
                     <h2 style="color:#ff00ff; margin: 10px 0;">{{ myName }}</h2>
                     <button @click="handleLogin" class="btn-main">MAIN SEKARANG</button>
-                    <button @click="deleteName" class="btn-exit" style="border:none; text-decoration:underline; font-size:0.8rem">Tukar Nama / Reset</button>
+                    <button @click="deleteName" class="btn-exit" style="border:none; text-decoration:underline; font-size:0.8rem">Tukar Nama</button>
                 </div>
             </div>
         </div>
@@ -62,12 +63,12 @@
             <div class="scoreboard">
                 <div class="team">
                     <span class="name">{{ myName }}</span>
-                    <div class="stats"><b>{{ myScore }}</b> <small>(WINS: {{ myWins }})</small></div>
+                    <div class="stats"><b>{{ myScore }}</b> <small>WINS: {{ myWins }}</small></div>
                 </div>
                 <div v-if="mode === 'multi'" class="vs">VS</div>
                 <div v-if="mode === 'multi'" class="team">
                     <span class="name">{{ opponentName }}</span>
-                    <div class="stats"><b>{{ opponentScore }}</b> <small>(WINS: {{ opponentWins }})</small></div>
+                    <div class="stats"><b>{{ opponentScore }}</b> <small>WINS: {{ opponentWins }}</small></div>
                 </div>
             </div>
 
@@ -92,10 +93,11 @@
                 </div>
             </div>
             
-            <button v-if="foundWords.length === words.length && words.length > 0 && (mode === 'single' || myId < peerIdInput)" 
-                    @click="nextGame" class="btn-main" style="margin: 10px 0;">NEXT GAME</button>
-
-            <button @click="window.location.reload()" class="btn-exit">Keluar</button>
+            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px; width: 100%; align-items: center; padding-bottom: 20px;">
+                <button v-if="foundWords.length === words.length && words.length > 0 && (mode === 'single' || myId < (peerIdInput || ''))" 
+                        @click="nextGame(false)" class="btn-main">NEXT GAME</button>
+                <button @click="window.location.reload()" class="btn-exit">Keluar</button>
+            </div>
         </div>
     </div>
 
