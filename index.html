@@ -20,15 +20,18 @@
             <div class="final-scores">
                 SCORE: {{ myScore }} - {{ opponentScore }}
             </div>
-            <button @click="nextGame" class="btn-restart">PUSINGAN SETERUSNYA</button>
-            <button @click="window.location.reload()" class="btn-exit" style="margin-top:10px; border:none">TAMAT</button>
+            <button v-if="mode === 'single' || (mode === 'multi' && myId < peerIdInput)" 
+                    @click="nextGame" class="btn-restart">PUSINGAN SETERUSNYA</button>
+            <p v-else-if="mode === 'multi'" style="color: #00f2ff; margin: 10px 0;">Menunggu Host memulakan game...</p>
+            
+            <button @click="window.location.reload()" class="btn-exit" style="margin-top:10px; border:none; background:transparent;">TAMAT</button>
         </div>
 
         <div v-if="screen === 'login'" class="screen">
             <h1>WORD SEARCH</h1>
             <div class="p2p-box">
                 <div v-if="!isNameSaved">
-                    <input v-model="myName" type="text" placeholder="Nama Anda">
+                    <input v-model="myName" type="text" placeholder="Nama Anda" maxlength="10">
                     <button @click="handleLogin" class="btn-main" :disabled="!myName">MASUK</button>
                 </div>
                 <div v-else>
@@ -50,7 +53,7 @@
             </div>
 
             <div v-if="mode === 'multi'" class="p2p-box">
-                <input v-model="peerIdInput" type="text" placeholder="ID Lawan">
+                <input v-model="peerIdInput" type="text" placeholder="ID Lawan" style="text-transform: uppercase;">
                 <button @click="connectToPeer" class="btn-sub">Connect & Play</button>
             </div>
         </div>
@@ -89,9 +92,10 @@
                 </div>
             </div>
             
-            <button v-if="foundWords.length === words.length && words.length > 0" 
+            <button v-if="foundWords.length === words.length && words.length > 0 && (mode === 'single' || myId < peerIdInput)" 
                     @click="nextGame" class="btn-main" style="margin: 10px 0;">NEXT GAME</button>
-            <button @click="screen = 'menu'" class="btn-exit">Keluar</button>
+
+            <button @click="window.location.reload()" class="btn-exit">Keluar</button>
         </div>
     </div>
 

@@ -17,6 +17,8 @@ createApp({
         const foundWords = ref([]);
         const myScore = ref(0);
         const opponentScore = ref(0);
+        
+        // Kemenangan sesi (Reset bila keluar/refresh)
         const myWins = ref(0);
         const opponentWins = ref(0);
         
@@ -26,18 +28,20 @@ createApp({
         let peer = null;
         let conn = null;
 
-        // Fungsi jana bunyi Beep (Sintetik)
-        const playBeep = (freq = 440, duration = 0.1) => {
-            const context = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = context.createOscillator();
-            const gain = context.createGain();
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(freq, context.currentTime);
-            gain.gain.setValueAtTime(0.1, context.currentTime);
-            oscillator.connect(gain);
-            gain.connect(context.destination);
-            oscillator.start();
-            oscillator.stop(context.currentTime + duration);
+        // Bunyi Beep Sintetik (Tanpa fail luaran)
+        const playBeep = (freq = 440, duration = 0.15) => {
+            try {
+                const context = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = context.createOscillator();
+                const gain = context.createGain();
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(freq, context.currentTime);
+                gain.gain.setValueAtTime(0.1, context.currentTime);
+                oscillator.connect(gain);
+                gain.connect(context.destination);
+                oscillator.start();
+                oscillator.stop(context.currentTime + duration);
+            } catch (e) { console.log("Audio ralat"); }
         };
 
         onMounted(() => {
@@ -46,7 +50,6 @@ createApp({
                 myName.value = savedName;
                 isNameSaved.value = true;
             }
-            myWins.value = parseInt(localStorage.getItem('ws_wins') || '0');
         });
 
         const generateShortId = () => Math.random().toString(36).substring(2, 6).toUpperCase();
@@ -61,9 +64,15 @@ createApp({
 
             peer.on('open', () => { screen.value = 'menu'; });
 
+            // PENTING: Untuk Host (Phone 1) terima connection
             peer.on('connection', c => {
                 conn = c;
                 mode.value = 'multi';
+                // Ambil nama Guest dari metadata
+                if (conn.metadata) {
+                    opponentName.value = conn.metadata.name;
+                    opponentWins.value = conn.metadata.wins || 0;
+                }
                 setupConnection();
             });
 
@@ -74,52 +83,57 @@ createApp({
         };
 
         const deleteName = () => {
-            localStorage.clear();
+            localStorage.removeItem('ws_user_name');
             window.location.reload();
+        };
+
+        const resetGameState = () => {
+            grid.value = []; words.value = []; foundWords.value = [];
+            foundCoordinates.value = []; myScore.value = 0; opponentScore.value = 0;
+            selectedCells.value = [];
+        };
+
+        const createNewGrid = async () => {
+            const res = await fetch('words.json');
+            const data = await res.json();
+            const allWords = data.list.map(w => w.toUpperCase());
+            const gameData = generateGrid(10, allWords);
+            grid.value = gameData.grid;
+            words.value = gameData.words;
+        };
+
+        const nextGame = async () => {
+            // Update skor sesi
+            if (myScore.value > opponentScore.value) myWins.value++;
+            else if (opponentScore.value > myScore.value) opponentWins.value++;
+            
+            resetGameState();
+            if (mode.value === 'single') {
+                await createNewGrid();
+            } else if (conn && myId.value < conn.peer) {
+                await createNewGrid();
+                // Host hantar grid baru & data sesi terkini
+                conn.send({ 
+                    type: 'START', 
+                    grid: grid.value, 
+                    words: words.value, 
+                    hostName: myName.value,
+                    wins: { host: myWins.value, guest: opponentWins.value } 
+                });
+            }
         };
 
         const startSinglePlayer = async () => {
             mode.value = 'single';
             screen.value = 'game';
             resetGameState();
+            myWins.value = 0; 
             await createNewGrid();
         };
 
-        const nextGame = async () => {
-            if (myScore.value > opponentScore.value) {
-                myWins.value++;
-                localStorage.setItem('ws_wins', myWins.value);
-            } else if (opponentScore.value > myScore.value) {
-                opponentWins.value++;
-            }
-            resetGameState();
-            if (mode.value === 'single') {
-                await createNewGrid();
-            } else if (conn && myId.value < conn.peer) {
-                await createNewGrid();
-                conn.send({ type: 'START', grid: grid.value, words: words.value });
-            }
-        };
-
-        const resetGameState = () => {
-            grid.value = [];
-            words.value = [];
-            foundWords.value = [];
-            foundCoordinates.value = [];
-            myScore.value = 0;
-            opponentScore.value = 0;
-            selectedCells.value = [];
-        };
-
-        const createNewGrid = async () => {
-            const allWordsList = await loadWords();
-            const gameData = generateGrid(10, allWordsList);
-            grid.value = gameData.grid;
-            words.value = gameData.words;
-        };
-
         const connectToPeer = () => {
-            if (!peerIdInput.value) return alert('ID Lawan diperlukan!');
+            if (!peerIdInput.value) return alert('ID Lawan!');
+            // Guest hantar nama kita dalam metadata semasa mula connect
             conn = peer.connect(peerIdInput.value, { 
                 metadata: { name: myName.value, wins: myWins.value } 
             });
@@ -129,12 +143,13 @@ createApp({
 
         const setupConnection = () => {
             conn.on('open', () => {
+                // Untuk Guest (Phone 2), ambil nama Host dari metadata
                 if (conn.metadata) {
                     opponentName.value = conn.metadata.name;
                     opponentWins.value = conn.metadata.wins || 0;
                 }
                 screen.value = 'game';
-                initMultiplayer();
+                if (myId.value < conn.peer) initMultiplayer();
             });
 
             conn.on('data', (data) => {
@@ -142,27 +157,40 @@ createApp({
                     resetGameState();
                     grid.value = data.grid;
                     words.value = data.words;
+                    
+                    // Guest terima nama Host secara rasmi
+                    if (data.hostName) opponentName.value = data.hostName;
+
+                    // Sinkronkan jumlah kemenangan sesi (Host vs Guest)
+                    if (data.wins) {
+                        if (myId.value < conn.peer) { // Saya Host
+                            myWins.value = data.wins.host;
+                            opponentWins.value = data.wins.guest;
+                        } else { // Saya Guest
+                            myWins.value = data.wins.guest;
+                            opponentWins.value = data.wins.host;
+                        }
+                    }
                 } else if (data.type === 'FOUND') {
                     markWordFound(data.start, data.end, data.word, false);
                 }
             });
         };
 
-        const loadWords = async () => {
-            const res = await fetch('words.json');
-            const data = await res.json();
-            return data.list.map(w => w.toUpperCase());
-        };
-
         const initMultiplayer = async () => {
-            if (myId.value < conn.peer) { 
-                await createNewGrid();
-                conn.send({ type: 'START', grid: grid.value, words: words.value });
-            }
+            await createNewGrid();
+            // Host hantar grid pusingan pertama & identitinya
+            conn.send({ 
+                type: 'START', 
+                grid: grid.value, 
+                words: words.value, 
+                hostName: myName.value,
+                wins: { host: myWins.value, guest: opponentWins.value } 
+            });
         };
 
         const handleCellClick = (r, c, char) => {
-            if (foundWords.value.length === words.length) return;
+            if (foundWords.value.length === words.value.length && words.value.length > 0) return;
             if (selectedCells.value.length === 0) {
                 selectedCells.value.push({ r, c, char });
             } else {
@@ -183,40 +211,39 @@ createApp({
             const steps = Math.max(Math.abs(distR), Math.abs(distC));
             if (distR !== 0 && distC !== 0 && Math.abs(distR) !== Math.abs(distC)) return null;
             const dr = distR === 0 ? 0 : distR / steps, dc = distC === 0 ? 0 : distC / steps;
-            for (let i = 0; i <= steps; i++) str += grid.value[s.r + dr * i][s.c + dc * i];
+            for (let i = 0; i <= steps; i++) {
+                const row = s.r + dr * i;
+                const col = s.c + dc * i;
+                str += grid.value[row][col];
+            }
             const rev = str.split('').reverse().join('');
             if (words.value.includes(str) && !foundWords.value.includes(str)) return str;
             if (words.value.includes(rev) && !foundWords.value.includes(rev)) return rev;
             return null;
         };
 
-        const highlightCoordinates = (s, e) => {
-            const distR = e.r - s.r, distC = e.c - s.c;
-            const steps = Math.max(Math.abs(distR), Math.abs(distC));
-            const dr = distR === 0 ? 0 : distR / steps, dc = distC === 0 ? 0 : distC / steps;
-            for (let i = 0; i <= steps; i++) {
-                const r = s.r + dr * i;
-                const c = s.c + dc * i;
-                foundCoordinates.value.push({ r, c, animate: true });
-                setTimeout(() => {
-                    const cell = foundCoordinates.value.find(coord => coord.r === r && coord.c === c);
-                    if (cell) cell.animate = false;
-                }, 600);
-            }
-        };
-
         const markWordFound = (s, e, word, isLocal) => {
             foundWords.value.push(word);
-            // Mainkan bunyi: Frekuensi tinggi jika sendiri, rendah jika lawan
-            playBeep(isLocal ? 880 : 440, 0.15);
-            
+            playBeep(isLocal ? 880 : 440);
             if (isLocal) { 
                 myScore.value += 10; 
                 if (navigator.vibrate) navigator.vibrate(100); 
             } else { 
                 opponentScore.value += 10; 
             }
-            highlightCoordinates(s, e);
+            
+            const distR = e.r - s.r, distC = e.c - s.c;
+            const steps = Math.max(Math.abs(distR), Math.abs(distC));
+            const dr = distR === 0 ? 0 : distR / steps, dc = distC === 0 ? 0 : dc / steps;
+            
+            for (let i = 0; i <= steps; i++) {
+                const r = s.r + dr * i, c = s.c + dc * i;
+                foundCoordinates.value.push({ r, c, animate: true });
+                setTimeout(() => {
+                    const cell = foundCoordinates.value.find(coord => coord.r === r && coord.c === c);
+                    if (cell) cell.animate = false;
+                }, 600);
+            }
         };
 
         const isSelected = (r, c) => selectedCells.value.some(cell => cell.r === r && cell.c === c);
