@@ -1,4 +1,5 @@
 import { generateGrid } from './placeword.js';
+import { playBeep, playEndSound } from './sound.js';
 
 const { createApp, ref, onMounted } = Vue; 
 
@@ -22,19 +23,6 @@ createApp({
         const foundCoordinates = ref([]);
         let peer = null;
         let conn = null;
-
-        const playBeep = (freq = 440, duration = 0.15) => {
-            try {
-                const context = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = context.createOscillator();
-                const gain = context.createGain();
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(freq, context.currentTime);
-                gain.gain.setValueAtTime(0.05, context.currentTime);
-                oscillator.connect(gain); gain.connect(context.destination);
-                oscillator.start(); oscillator.stop(context.currentTime + duration);
-            } catch (e) {}
-        };
 
         onMounted(() => {
             const savedName = localStorage.getItem('ws_user_name');
@@ -72,8 +60,13 @@ createApp({
 
         const nextGame = async (isFirst = false) => {
             if (!isFirst) {
-                if (myScore.value > opponentScore.value) myWins.value++;
-                else if (opponentScore.value > myScore.value) opponentWins.value++;
+                if (myScore.value > opponentScore.value) {
+                    myWins.value++;
+                    playEndSound(true); 
+                } else if (opponentScore.value > myScore.value) {
+                    opponentWins.value++;
+                    playEndSound(false); 
+                }
             }
             resetGameState();
             await createNewGrid();
@@ -107,6 +100,10 @@ createApp({
                 if (word) {
                     markWordFound(start, end, word, true);
                     if (mode.value === 'multi' && conn) conn.send({ type: 'FOUND', start, end, word });
+                    
+                    if (foundWords.value.length === words.value.length) {
+                        setTimeout(() => nextGame(), 1500);
+                    }
                 }
                 selectedCells.value = [];
             }
@@ -126,9 +123,17 @@ createApp({
 
         const markWordFound = (s, e, word, isLocal) => {
             foundWords.value.push(word);
+            
+            // Panggil bunyi dari sound.js
             playBeep(isLocal ? 800 : 400);
-            if (isLocal) { myScore.value += 10; if (navigator.vibrate) navigator.vibrate(100); }
-            else opponentScore.value += 10;
+
+            if (isLocal) { 
+                myScore.value += 10; 
+                if (navigator.vibrate) navigator.vibrate(100); 
+            } else { 
+                opponentScore.value += 10; 
+            }
+
             const dr = Math.sign(e.r - s.r), dc = Math.sign(e.c - s.c);
             const steps = Math.max(Math.abs(e.r - s.r), Math.abs(e.c - s.c));
             for (let i = 0; i <= steps; i++) {
