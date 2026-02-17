@@ -1,0 +1,107 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #050505;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: #fff;
+    overflow-x: hidden;
+}
+
+#app {
+    min-height: 100vh;
+}
+
+/* Skrin Menu Utama */
+.screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;    /* Center secara mendatar */
+    justify-content: center; /* Center secara menegak */
+    min-height: 100vh;
+    text-align: center;      /* Pastikan teks di dalam pun center */
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Betulkan Tajuk WORD SEARCH */
+h1 {
+    font-size: 3rem;
+    margin-bottom: 40px;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    /* Efek Neon Flicker */
+    text-shadow: 
+        0 0 5px #fff,
+        0 0 10px #fff,
+        0 0 20px #00f2ff,
+        0 0 40px #00f2ff;
+    animation: neon-glow 2s infinite alternate;
+}
+
+@keyframes neon-glow {
+    from { opacity: 1; }
+    to { opacity: 0.8; text-shadow: 0 0 5px #fff, 0 0 15px #00f2ff; }
+}
+
+/* Mode Selector & Buttons */
+.mode-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.btn-main {
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    background: transparent;
+    color: #00f2ff;
+    border: 2px solid #00f2ff;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+    text-transform: uppercase;
+}
+
+.btn-main:hover {
+    background: #00f2ff;
+    color: #000;
+    box-shadow: 0 0 20px #00f2ff;
+}
+
+/* Box untuk Multiplayer */
+.p2p-box {
+    margin-top: 30px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid #333;
+    width: 100%;
+    max-width: 320px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    background: #111;
+    border: 1px solid #444;
+    color: #fff;
+    border-radius: 5px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.btn-sub {
+    width: 100%;
+    padding: 10px;
+    background: #ff00ff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+}
