@@ -17,8 +17,6 @@ createApp({
         const foundWords = ref([]);
         const myScore = ref(0);
         const opponentScore = ref(0);
-        
-        // Simpan jumlah kemenangan keseluruhan (Match Score)
         const myWins = ref(0);
         const opponentWins = ref(0);
         
@@ -28,13 +26,26 @@ createApp({
         let peer = null;
         let conn = null;
 
+        // Fungsi jana bunyi Beep (Sintetik)
+        const playBeep = (freq = 440, duration = 0.1) => {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = context.createOscillator();
+            const gain = context.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(freq, context.currentTime);
+            gain.gain.setValueAtTime(0.1, context.currentTime);
+            oscillator.connect(gain);
+            gain.connect(context.destination);
+            oscillator.start();
+            oscillator.stop(context.currentTime + duration);
+        };
+
         onMounted(() => {
             const savedName = localStorage.getItem('ws_user_name');
             if (savedName) {
                 myName.value = savedName;
                 isNameSaved.value = true;
             }
-            // Load jumlah kemenangan dari storage jika ada
             myWins.value = parseInt(localStorage.getItem('ws_wins') || '0');
         });
 
@@ -43,15 +54,19 @@ createApp({
         const handleLogin = () => {
             if (!myName.value) return;
             localStorage.setItem('ws_user_name', myName.value);
+            
             const shortId = generateShortId();
             myId.value = shortId;
             peer = new Peer(shortId);
-            peer.on('open', () => screen.value = 'menu');
+
+            peer.on('open', () => { screen.value = 'menu'; });
+
             peer.on('connection', c => {
                 conn = c;
                 mode.value = 'multi';
                 setupConnection();
             });
+
             peer.on('error', err => {
                 if(err.type === 'unavailable-id') handleLogin();
                 else alert('Ralat: ' + err.type);
@@ -59,8 +74,7 @@ createApp({
         };
 
         const deleteName = () => {
-            localStorage.removeItem('ws_user_name');
-            localStorage.removeItem('ws_wins');
+            localStorage.clear();
             window.location.reload();
         };
 
@@ -71,7 +85,6 @@ createApp({
             await createNewGrid();
         };
 
-        // Fungsi untuk pusingan seterusnya
         const nextGame = async () => {
             if (myScore.value > opponentScore.value) {
                 myWins.value++;
@@ -79,12 +92,10 @@ createApp({
             } else if (opponentScore.value > myScore.value) {
                 opponentWins.value++;
             }
-            
             resetGameState();
             if (mode.value === 'single') {
                 await createNewGrid();
             } else if (conn && myId.value < conn.peer) {
-                // Host janakan grid baru untuk multiplayer
                 await createNewGrid();
                 conn.send({ type: 'START', grid: grid.value, words: words.value });
             }
@@ -109,18 +120,23 @@ createApp({
 
         const connectToPeer = () => {
             if (!peerIdInput.value) return alert('ID Lawan diperlukan!');
-            conn = peer.connect(peerIdInput.value, { metadata: { name: myName.value, wins: myWins.value } });
+            conn = peer.connect(peerIdInput.value, { 
+                metadata: { name: myName.value, wins: myWins.value } 
+            });
             mode.value = 'multi';
             setupConnection();
         };
 
         const setupConnection = () => {
             conn.on('open', () => {
-                opponentName.value = conn.metadata?.name || "Lawan";
-                opponentWins.value = conn.metadata?.wins || 0;
+                if (conn.metadata) {
+                    opponentName.value = conn.metadata.name;
+                    opponentWins.value = conn.metadata.wins || 0;
+                }
                 screen.value = 'game';
                 initMultiplayer();
             });
+
             conn.on('data', (data) => {
                 if (data.type === 'START') {
                     resetGameState();
@@ -146,7 +162,7 @@ createApp({
         };
 
         const handleCellClick = (r, c, char) => {
-            if (foundWords.value.length === words.value.length) return;
+            if (foundWords.value.length === words.length) return;
             if (selectedCells.value.length === 0) {
                 selectedCells.value.push({ r, c, char });
             } else {
@@ -178,11 +194,22 @@ createApp({
             const distR = e.r - s.r, distC = e.c - s.c;
             const steps = Math.max(Math.abs(distR), Math.abs(distC));
             const dr = distR === 0 ? 0 : distR / steps, dc = distC === 0 ? 0 : distC / steps;
-            for (let i = 0; i <= steps; i++) foundCoordinates.value.push({ r: s.r + dr * i, c: s.c + dc * i });
+            for (let i = 0; i <= steps; i++) {
+                const r = s.r + dr * i;
+                const c = s.c + dc * i;
+                foundCoordinates.value.push({ r, c, animate: true });
+                setTimeout(() => {
+                    const cell = foundCoordinates.value.find(coord => coord.r === r && coord.c === c);
+                    if (cell) cell.animate = false;
+                }, 600);
+            }
         };
 
         const markWordFound = (s, e, word, isLocal) => {
             foundWords.value.push(word);
+            // Mainkan bunyi: Frekuensi tinggi jika sendiri, rendah jika lawan
+            playBeep(isLocal ? 880 : 440, 0.15);
+            
             if (isLocal) { 
                 myScore.value += 10; 
                 if (navigator.vibrate) navigator.vibrate(100); 
@@ -194,11 +221,12 @@ createApp({
 
         const isSelected = (r, c) => selectedCells.value.some(cell => cell.r === r && cell.c === c);
         const isFound = (r, c) => foundCoordinates.value.some(coord => coord.r === r && coord.c === c);
+        const shouldAnimate = (r, c) => foundCoordinates.value.some(coord => coord.r === r && coord.c === c && coord.animate);
 
         return { 
             screen, mode, myId, myName, peerIdInput, opponentName, grid, words, isNameSaved,
             myScore, opponentScore, myWins, opponentWins, foundWords, handleCellClick, 
-            isSelected, isFound, startSinglePlayer, connectToPeer, handleLogin, deleteName, nextGame
+            isSelected, isFound, shouldAnimate, startSinglePlayer, connectToPeer, handleLogin, deleteName, nextGame
         };
     }
 }).mount('#app');

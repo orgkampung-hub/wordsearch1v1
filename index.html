@@ -21,7 +21,7 @@
                 SCORE: {{ myScore }} - {{ opponentScore }}
             </div>
             <button @click="nextGame" class="btn-restart">PUSINGAN SETERUSNYA</button>
-            <button @click="window.location.reload()" class="btn-exit" style="margin-top:10px; border:none">TAMAT PERMAINAN</button>
+            <button @click="window.location.reload()" class="btn-exit" style="margin-top:10px; border:none">TAMAT</button>
         </div>
 
         <div v-if="screen === 'login'" class="screen">
@@ -32,10 +32,10 @@
                     <button @click="handleLogin" class="btn-main" :disabled="!myName">MASUK</button>
                 </div>
                 <div v-else>
-                    <p>Selamat Datang Kembali,</p>
-                    <h2 style="color:#ff00ff">{{ myName }}</h2>
+                    <p>Selamat Datang,</p>
+                    <h2 style="color:#ff00ff; margin: 10px 0;">{{ myName }}</h2>
                     <button @click="handleLogin" class="btn-main">MAIN SEKARANG</button>
-                    <button @click="deleteName" class="btn-exit" style="border:none; text-decoration:underline; font-size:0.8rem">Tukar Nama / Reset Data</button>
+                    <button @click="deleteName" class="btn-exit" style="border:none; text-decoration:underline; font-size:0.8rem">Tukar Nama / Reset</button>
                 </div>
             </div>
         </div>
@@ -78,7 +78,11 @@
                 <div v-for="(row, r) in grid" :key="r" class="grid-row">
                     <div v-for="(char, c) in row" :key="c" 
                          class="cell" 
-                         :class="{ selecting: isSelected(r, c), found: isFound(r, c) }"
+                         :class="{ 
+                            selecting: isSelected(r, c), 
+                            found: isFound(r, c),
+                            'animate-found': shouldAnimate(r, c) 
+                         }"
                          @click="handleCellClick(r, c, char)">
                         {{ char }}
                     </div>
@@ -86,11 +90,8 @@
             </div>
             
             <button v-if="foundWords.length === words.length && words.length > 0" 
-                    @click="nextGame" class="btn-main" style="margin: 10px 0;">
-                NEXT GAME
-            </button>
-
-            <button @click="screen = 'menu'" class="btn-exit">Keluar ke Menu</button>
+                    @click="nextGame" class="btn-main" style="margin: 10px 0;">NEXT GAME</button>
+            <button @click="screen = 'menu'" class="btn-exit">Keluar</button>
         </div>
     </div>
 
