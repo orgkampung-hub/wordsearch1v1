@@ -62,10 +62,9 @@ createApp({
             if (!isFirst) {
                 if (myScore.value > opponentScore.value) {
                     myWins.value++;
-                    playEndSound(true); 
+                    // playEndSound dialihkan ke markWordFound untuk trigger automatik
                 } else if (opponentScore.value > myScore.value) {
                     opponentWins.value++;
-                    playEndSound(false); 
                 }
             }
             resetGameState();
@@ -126,6 +125,15 @@ createApp({
                 if (navigator.vibrate) navigator.vibrate(100); 
             } else { 
                 opponentScore.value += 10; 
+            }
+
+            // LOGIK BARU: Main bunyi Menang/Kalah sebaik sahaja perkataan terakhir dijumpai
+            if (foundWords.value.length === words.value.length && words.value.length > 0) {
+                if (myScore.value > opponentScore.value) {
+                    playEndSound(true); // Sorakan/Menang
+                } else if (opponentScore.value > myScore.value) {
+                    playEndSound(false); // Boo/Kalah
+                }
             }
 
             const dr = Math.sign(e.r - s.r), dc = Math.sign(e.c - s.c);
