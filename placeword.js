@@ -1,7 +1,7 @@
 export function generateGrid(size, allWords) {
     const selectedWords = [...allWords]
         .sort(() => 0.5 - Math.random())
-        .slice(0, 10)
+        .slice(0, 11)
         .map(w => w.toUpperCase());
 
     let bestGrid = null;
@@ -53,7 +53,7 @@ export function generateGrid(size, allWords) {
             }
         }
 
-        if (placedCount === 10 && diagonalCount >= 1) {
+        if (placedCount === 11 && diagonalCount >= 1) {
             if (currentCrosses > maxCrosses) {
                 maxCrosses = currentCrosses;
                 bestGrid = JSON.parse(JSON.stringify(grid));
