@@ -100,10 +100,6 @@ createApp({
                 if (word) {
                     markWordFound(start, end, word, true);
                     if (mode.value === 'multi' && conn) conn.send({ type: 'FOUND', start, end, word });
-                    
-                    if (foundWords.value.length === words.value.length) {
-                        setTimeout(() => nextGame(), 1500);
-                    }
                 }
                 selectedCells.value = [];
             }
@@ -123,8 +119,6 @@ createApp({
 
         const markWordFound = (s, e, word, isLocal) => {
             foundWords.value.push(word);
-            
-            // Panggil bunyi dari sound.js
             playBeep(isLocal ? 800 : 400);
 
             if (isLocal) { 
