@@ -78,8 +78,16 @@ export const useGame = (state) => {
             const won = state.myScore.value >= state.opponentScore.value;
             playEndSound(won);
             
-            // Aktifkan modal pemenang
+            // Aktifkan modal pemenang pada device sendiri
             state.showWinner.value = true;
+
+            // Hantar signal tamat ke device lawan
+            if (state.mode.value === 'multi' && window.currentConn) {
+                window.currentConn.send({
+                    type: 'GAMEOVER'
+                });
+            }
+            
             console.log("Pusingan Tamat");
         }
     };

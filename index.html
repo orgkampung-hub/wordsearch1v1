@@ -94,7 +94,7 @@
 
     <div v-if="showWinner" class="winner-overlay">
         <div class="winner-text">
-            {{ myScore > opponentScore ? 'MENANG!' : (myScore < opponentScore ? 'KALAH!' : 'SERI!') }}
+            {{ myScore > opponentScore ? 'YOU WIN' : (myScore < opponentScore ? 'YOU LOST' : 'DRAW') }}
         </div>
         
         <div class="final-scores">

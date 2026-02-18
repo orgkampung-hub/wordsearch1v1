@@ -10,7 +10,7 @@ createApp({
         const mode = ref('single'); 
         const isNameSaved = ref(false);
         const showTutorial = ref(false); 
-        const showWinner = ref(false); // Tambah state modal menang
+        const showWinner = ref(false); 
         const myId = ref('');
         const myName = ref('');
         const peerIdInput = ref('');
@@ -27,7 +27,6 @@ createApp({
         let peer = null;
         let conn = null;
 
-        // Hook logic dari game.js - Hantar showWinner sekali
         const { handleCellClick } = useGame({
             grid, words, foundWords, myScore, opponentScore, 
             mode, selectedCells, foundCoordinates, showWinner
@@ -59,7 +58,7 @@ createApp({
             conn.on('open', () => {
                 screen.value = 'game'; mode.value = 'multi';
                 conn.send({ type: 'HANDSHAKE', name: myName.value });
-                playBeep(200, 0.05); // Kejutkan audio context masa sambung
+                playBeep(200, 0.05); 
             });
             conn.on('data', async (data) => {
                 if (data.type === 'HANDSHAKE') {
@@ -71,7 +70,7 @@ createApp({
                     resetGameState();
                     grid.value = data.grid; words.value = data.words;
                     myWins.value = data.winsYou; opponentWins.value = data.winsOpp;
-                    showWinner.value = false; // Tutup modal bila lawan start game baru
+                    showWinner.value = false; 
                     screen.value = 'game';
                 }
                 if (data.type === 'FOUND') {
@@ -89,6 +88,12 @@ createApp({
                     foundWords.value.push(data.word);
                     opponentScore.value += 10;
                     playBeep(400, 0.2);
+                }
+                // TERIMA SIGNAL GAMEOVER DARI PEMENANG
+                if (data.type === 'GAMEOVER') {
+                    const won = myScore.value >= opponentScore.value;
+                    playEndSound(won);
+                    showWinner.value = true;
                 }
             });
         };
@@ -113,7 +118,13 @@ createApp({
             resetGameState();
             await createNewGrid();
             if (mode.value === 'multi' && conn) {
-                conn.send({ type: 'START', grid: grid.value, words: words.value, winsYou: opponentWins.value, winsOpp: myWins.value });
+                conn.send({ 
+                    type: 'START', 
+                    grid: grid.value, 
+                    words: words.value, 
+                    winsYou: opponentWins.value, 
+                    winsOpp: myWins.value 
+                });
             }
         };
 
