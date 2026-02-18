@@ -1,4 +1,5 @@
 import { generateGrid } from './placeword.js';
+import { playBeep, playEndSound } from './sound.js'; // Tambah import sound
 
 export const useGame = (state) => {
     
@@ -54,6 +55,10 @@ export const useGame = (state) => {
     const markWordFound = (s, e, word, isLocal, state) => {
         state.foundWords.value.push(word);
         
+        // Panggil sound bila jumpa perkataan
+        // isLocal true = 800Hz (nada tinggi), isLocal false = 400Hz (nada rendah)
+        playBeep(isLocal ? 800 : 400);
+
         if (isLocal) {
             state.myScore.value += 10;
             if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
@@ -74,7 +79,9 @@ export const useGame = (state) => {
         }
 
         if (state.foundWords.value.length === state.words.value.length && state.words.value.length > 0) {
-            // Kita tak guna alert sebab alert boleh block PeerJS connection
+            // Panggil sound tamat permainan
+            const won = state.myScore.value >= state.opponentScore.value;
+            playEndSound(won);
             console.log("Pusingan Tamat");
         }
     };
