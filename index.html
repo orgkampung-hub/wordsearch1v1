@@ -92,6 +92,19 @@
         <button @click="exitGame" class="btn-exit">Tamat</button>
     </div>
 
+    <div v-if="showWinner" class="winner-overlay">
+        <div class="winner-text">
+            {{ myScore > opponentScore ? 'MENANG!' : (myScore < opponentScore ? 'KALAH!' : 'SERI!') }}
+        </div>
+        
+        <div class="final-scores">
+            {{ myScore }} <span style="color:#fff; font-size:1rem;">VS</span> {{ mode === 'multi' ? opponentScore : 'SCORE' }}
+        </div>
+
+        <button @click="handleNextGame" class="btn-restart">Pusingan Seterusnya</button>
+        <button @click="exitGame" class="btn-link" style="color:#ff3e3e; margin-top:10px;">Tamat & Keluar</button>
+    </div>
+
     <div v-if="showTutorial" class="modal-overlay" @click.self="showTutorial = false">
         <div class="modal-content">
             <h3>Cara Main 1v1 🧩</h3>

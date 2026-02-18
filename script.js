@@ -10,6 +10,7 @@ createApp({
         const mode = ref('single'); 
         const isNameSaved = ref(false);
         const showTutorial = ref(false); 
+        const showWinner = ref(false); // Tambah state modal menang
         const myId = ref('');
         const myName = ref('');
         const peerIdInput = ref('');
@@ -26,10 +27,10 @@ createApp({
         let peer = null;
         let conn = null;
 
-        // Hook logic dari game.js
+        // Hook logic dari game.js - Hantar showWinner sekali
         const { handleCellClick } = useGame({
             grid, words, foundWords, myScore, opponentScore, 
-            mode, selectedCells, foundCoordinates
+            mode, selectedCells, foundCoordinates, showWinner
         });
 
         onMounted(() => {
@@ -70,10 +71,10 @@ createApp({
                     resetGameState();
                     grid.value = data.grid; words.value = data.words;
                     myWins.value = data.winsYou; opponentWins.value = data.winsOpp;
+                    showWinner.value = false; // Tutup modal bila lawan start game baru
                     screen.value = 'game';
                 }
                 if (data.type === 'FOUND') {
-                    // Masukkan koordinat lawan supaya grid nampak perkataan dijumpai
                     const dr = Math.sign(data.end.r - data.start.r);
                     const dc = Math.sign(data.end.c - data.start.c);
                     const steps = Math.max(Math.abs(data.end.r - data.start.r), Math.abs(data.end.c - data.start.c));
@@ -87,7 +88,7 @@ createApp({
                     
                     foundWords.value.push(data.word);
                     opponentScore.value += 10;
-                    playBeep(400, 0.2); // Bunyi nada rendah untuk lawan
+                    playBeep(400, 0.2);
                 }
             });
         };
@@ -99,7 +100,7 @@ createApp({
             peer = new Peer(myId.value);
             peer.on('open', () => {
                 screen.value = 'menu';
-                playBeep(200, 0.01); // Trigger audio awal
+                playBeep(200, 0.01);
             });
             peer.on('connection', c => { conn = c; setupConnection(); });
         };
@@ -118,15 +119,19 @@ createApp({
 
         return { 
             screen, mode, myId, myName, peerIdInput, opponentName, grid, words, isNameSaved,
-            showTutorial, myScore, opponentScore, myWins, opponentWins, foundWords, handleCellClick, 
+            showTutorial, showWinner, myScore, opponentScore, myWins, opponentWins, foundWords, handleCellClick, 
             isSelected: (r, c) => selectedCells.value.some(cell => cell.r === r && cell.c === c),
             isFound: (r, c) => foundCoordinates.value.some(coord => coord.r === r && coord.c === c),
-            shouldAnimate: (r, c) => foundCoordinates.value.some(coord => coord.r === r && coord.c === c && coord.animate),
             startSinglePlayer: async () => { 
                 mode.value = 'single'; 
                 screen.value = 'game'; 
+                showWinner.value = false;
                 await createNewGrid(); 
-                playBeep(600, 0.1); // Confirmkan audio aktif
+                playBeep(600, 0.1);
+            },
+            handleNextGame: () => {
+                showWinner.value = false;
+                nextGame(false);
             },
             connectToPeer: () => { 
                 if(!peerIdInput.value) return;

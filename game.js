@@ -1,5 +1,5 @@
 import { generateGrid } from './placeword.js';
-import { playBeep, playEndSound } from './sound.js'; // Tambah import sound
+import { playBeep, playEndSound } from './sound.js'; 
 
 export const useGame = (state) => {
     
@@ -34,11 +34,10 @@ export const useGame = (state) => {
     };
 
     const checkWord = (s, e, grid, allWords) => {
-        const dr = Math.sign(e.r - s.r); // Arah baris (-1, 0, 1)
-        const dc = Math.sign(e.c - s.c); // Arah kolum (-1, 0, 1)
+        const dr = Math.sign(e.r - s.r); 
+        const dc = Math.sign(e.c - s.c); 
         const steps = Math.max(Math.abs(e.r - s.r), Math.abs(e.c - s.c));
 
-        // Syarat: Mesti lurus (H/V) atau Diagonal tepat (45 darjah)
         if (dr !== 0 && dc !== 0 && Math.abs(e.r - s.r) !== Math.abs(e.c - s.c)) return null;
 
         let str = "";
@@ -55,8 +54,6 @@ export const useGame = (state) => {
     const markWordFound = (s, e, word, isLocal, state) => {
         state.foundWords.value.push(word);
         
-        // Panggil sound bila jumpa perkataan
-        // isLocal true = 800Hz (nada tinggi), isLocal false = 400Hz (nada rendah)
         playBeep(isLocal ? 800 : 400);
 
         if (isLocal) {
@@ -66,7 +63,6 @@ export const useGame = (state) => {
             state.opponentScore.value += 10;
         }
 
-        // Simpan koordinat dengan logik arah (Support Diagonal)
         const dr = Math.sign(e.r - s.r);
         const dc = Math.sign(e.c - s.c);
         const steps = Math.max(Math.abs(e.r - s.r), Math.abs(e.c - s.c));
@@ -79,9 +75,11 @@ export const useGame = (state) => {
         }
 
         if (state.foundWords.value.length === state.words.value.length && state.words.value.length > 0) {
-            // Panggil sound tamat permainan
             const won = state.myScore.value >= state.opponentScore.value;
             playEndSound(won);
+            
+            // Aktifkan modal pemenang
+            state.showWinner.value = true;
             console.log("Pusingan Tamat");
         }
     };
