@@ -8,6 +8,7 @@ createApp({
         const screen = ref('login');
         const mode = ref('single'); 
         const isNameSaved = ref(false);
+        const showTutorial = ref(false); // Variable kawal tutorial
         const myId = ref('');
         const myName = ref('');
         const peerIdInput = ref('');
@@ -62,7 +63,6 @@ createApp({
             if (!isFirst) {
                 if (myScore.value > opponentScore.value) {
                     myWins.value++;
-                    // playEndSound dialihkan ke markWordFound untuk trigger automatik
                 } else if (opponentScore.value > myScore.value) {
                     opponentWins.value++;
                 }
@@ -127,12 +127,11 @@ createApp({
                 opponentScore.value += 10; 
             }
 
-            // LOGIK BARU: Main bunyi Menang/Kalah sebaik sahaja perkataan terakhir dijumpai
             if (foundWords.value.length === words.value.length && words.value.length > 0) {
                 if (myScore.value > opponentScore.value) {
-                    playEndSound(true); // Sorakan/Menang
+                    playEndSound(true); 
                 } else if (opponentScore.value > myScore.value) {
-                    playEndSound(false); // Boo/Kalah
+                    playEndSound(false); 
                 }
             }
 
@@ -150,7 +149,7 @@ createApp({
 
         return { 
             screen, mode, myId, myName, peerIdInput, opponentName, grid, words, isNameSaved,
-            myScore, opponentScore, myWins, opponentWins, foundWords, handleCellClick, 
+            showTutorial, myScore, opponentScore, myWins, opponentWins, foundWords, handleCellClick, 
             isSelected: (r, c) => selectedCells.value.some(cell => cell.r === r && cell.c === c),
             isFound: (r, c) => foundCoordinates.value.some(coord => coord.r === r && coord.c === c),
             shouldAnimate: (r, c) => foundCoordinates.value.some(coord => coord.r === r && coord.c === c && coord.animate),

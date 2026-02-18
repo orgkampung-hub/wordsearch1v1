@@ -2,98 +2,134 @@
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Search Neon</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="game.css">
-    <link rel="stylesheet" href="winning.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WordSearch 1v1</title>
+    
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="tuto.css">
 </head>
 <body>
-    <div id="app">
-        <div v-if="foundWords.length === words.length && words.length > 0" class="winner-overlay">
-            <div class="winner-text">
-                {{ myScore > opponentScore ? 'YOU WIN!' : (myScore < opponentScore ? 'YOU LOST' : 'DRAW!') }}
-            </div>
-            <div class="final-scores">SCORE: {{ myScore }} - {{ opponentScore }}</div>
-            
-            <button v-if="mode === 'single' || myId < opponentName" @click="nextGame(false)" class="btn-restart">PUSINGAN SETERUSNYA</button>
-            <p v-else style="color:#00f2ff; margin:15px 0;">Menunggu Host...</p>
 
-            <button @click="exitGame" class="btn-exit" style="margin-top:10px; border:1px solid #ff3e3e; background:transparent;">TAMAT & RESET</button>
-        </div>
-
-        <div v-if="screen === 'login'" class="screen">
-            <h1>WORD SEARCH</h1>
-            <div class="p2p-box">
-                <div v-if="!isNameSaved">
-                    <input v-model="myName" type="text" placeholder="Nama Anda" maxlength="10">
-                    <button @click="handleLogin" class="btn-main" :disabled="!myName">MASUK</button>
-                </div>
-                <div v-else>
-                    <p>Selamat Datang,</p>
-                    <h2 style="color:#ff00ff; margin: 10px 0;">{{ myName }}</h2>
-                    <button @click="handleLogin" class="btn-main">MAIN SEKARANG</button>
-                    <button @click="deleteName" class="btn-exit" style="border:none; text-decoration:underline; font-size:0.8rem">Tukar Nama</button>
-                </div>
-            </div>
-        </div>
-
-        <div v-if="screen === 'menu'" class="screen">
-            <h1>WORD SEARCH</h1>
-            <p>ID ANDA: <b style="color:#00f2ff">{{ myId }}</b></p>
-            <div class="mode-selector">
-                <button @click="startSinglePlayer" class="btn-main">Single Player</button>
-                <button @click="mode = 'multi'" class="btn-main">Multiplayer (1v1)</button>
-            </div>
-            <div v-if="mode === 'multi'" class="p2p-box">
-                <input v-model="peerIdInput" type="text" placeholder="ID Lawan" style="text-transform: uppercase;">
-                <button @click="connectToPeer" class="btn-sub">Connect & Play</button>
-            </div>
-        </div>
-
-        <div v-if="screen === 'game'" class="screen game-screen">
-            <div class="scoreboard">
-                <div class="team">
-                    <span class="name">{{ myName }}</span>
-                    <div class="stats"><b>{{ myScore }}</b></div>
-                    <div class="win-badge">WINS: {{ myWins }}</div>
-                </div>
-
-                <div v-if="mode === 'multi'" class="vs">VS</div>
-
-                <div v-if="mode === 'multi'" class="team">
-                    <span class="name">{{ opponentName }}</span>
-                    <div class="stats"><b>{{ opponentScore }}</b></div>
-                    <div class="win-badge">WINS: {{ opponentWins }}</div>
-                </div>
-            </div>
-
-            <div class="word-list">
-                <span v-for="word in words" :key="word" :class="{ wordFound: foundWords.includes(word) }">
-                    {{ word }}
-                </span>
-            </div>
-
-            <div class="grid">
-                <div v-for="(row, r) in grid" :key="r" class="grid-row">
-                    <div v-for="(char, c) in row" :key="c" 
-                         class="cell" 
-                         :class="{ selecting: isSelected(r, c), found: isFound(r, c), 'animate-found': shouldAnimate(r, c) }"
-                         @click="handleCellClick(r, c, char)">
-                        {{ char }}
-                    </div>
-                </div>
-            </div>
-            
-            <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px; width: 100%; align-items: center; padding-bottom: 20px;">
-                <button v-if="foundWords.length === words.length && words.length > 0 && (mode === 'single' || myId < opponentName)" 
-                        @click="nextGame(false)" class="btn-main">NEXT GAME</button>
-                <button @click="exitGame" class="btn-exit">Keluar</button>
-            </div>
+<div id="app" v-cloak>
+    
+    <div v-if="screen === 'login'" class="container">
+        <h1>🧩 WordSearch</h1>
+        <p>Masukkan nama untuk mula</p>
+        <input v-model="myName" placeholder="Nama anda..." @keyup.enter="handleLogin">
+        <button @click="handleLogin" class="btn-main">MASUK</button>
+        
+        <div v-if="isNameSaved" class="footer-actions">
+            <button @click="deleteName" class="btn-link">Tukar Akaun</button>
         </div>
     </div>
-    <script type="module" src="script.js"></script>
+
+    <div v-if="screen === 'menu'" class="container">
+        <h2>Hai, {{ myName }}!</h2>
+        
+        <div class="menu-grid">
+            <button @click="startSinglePlayer" class="btn-menu">
+                <span class="icon">👤</span> Solo
+            </button>
+            <button @click="screen = 'lobby'" class="btn-menu">
+                <span class="icon">👥</span> 1v1 Lawan
+            </button>
+        </div>
+
+        <button @click="showTutorial = true" class="btn-tutorial">❓ Cara Main 1v1</button>
+        
+        <button @click="exitGame" class="btn-link">Keluar</button>
+    </div>
+
+    <div v-if="screen === 'lobby'" class="container">
+        <h3>Lobby 1v1</h3>
+        <div class="id-box">
+            <small>ID ANDA:</small>
+            <div class="my-id">{{ myId }}</div>
+        </div>
+        
+        <hr>
+        
+        <div class="connect-box">
+            <p>Masukkan ID Lawan:</p>
+            <input v-model="peerIdInput" placeholder="Contoh: A1B2" class="input-id">
+            <button @click="connectToPeer" class="btn-main">SAMBUNG</button>
+        </div>
+        
+        <button @click="screen = 'menu'" class="btn-link">Kembali</button>
+    </div>
+
+    <div v-if="screen === 'game'" class="game-screen">
+        <div class="game-header">
+            <div class="player">
+                <div class="name">{{ myName }}</div>
+                <div class="score">{{ myScore }} <small>({{ myWins }} Menang)</small></div>
+            </div>
+            <div class="vs">VS</div>
+            <div class="player">
+                <div class="name">{{ opponentName }}</div>
+                <div class="score">{{ opponentScore }} <small>({{ opponentWins }} Menang)</small></div>
+            </div>
+        </div>
+
+        <div class="word-grid">
+            <div v-for="(row, rIndex) in grid" :key="rIndex" class="grid-row">
+                <div v-for="(char, cIndex) in row" :key="cIndex" 
+                     class="cell" 
+                     :class="{ 
+                        selecting: isSelected(rIndex, cIndex), 
+                        found: isFound(rIndex, cIndex),
+                        'animate-found': shouldAnimate(rIndex, cIndex)
+                     }"
+                     @click="handleCellClick(rIndex, cIndex, char)">
+                    {{ char }}
+                </div>
+            </div>
+        </div>
+
+        <div class="word-list">
+            <span v-for="word in words" :key="word" 
+                  :class="{ 'word-found': foundWords.includes(word) }">
+                {{ word }}
+            </span>
+        </div>
+
+        <div class="game-footer">
+            <button @click="nextGame(false)" class="btn-next">Next Round</button>
+            <button @click="exitGame" class="btn-exit">Tamat</button>
+        </div>
+    </div>
+
+    <div v-if="showTutorial" class="modal-overlay" @click.self="showTutorial = false">
+        <div class="modal-content">
+            <h3>Cara Main 1v1 🧩</h3>
+            <div class="tutorial-steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-text">Pilih mode <b>1v1 Lawan</b> di menu.</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-text"><b>Pemain A:</b> Berikan "ID ANDA" kepada kawan.</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-text"><b>Pemain B:</b> Masukkan ID kawan dalam kotak ID Lawan dan tekan <b>Sambung</b>.</div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-text">Siapa jumpa perkataan paling cepat akan menang pusingan tersebut!</div>
+                </div>
+            </div>
+            <button @click="showTutorial = false" class="btn-close-tuto">Faham!</button>
+        </div>
+    </div>
+
+</div>
+
+<script type="module" src="script.js"></script>
+
 </body>
 </html>

@@ -1,3 +1,4 @@
+/* Asas Body */
 body {
     margin: 0;
     padding: 0;
@@ -9,78 +10,102 @@ body {
 
 #app {
     min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-/* Skrin Menu Utama */
-.screen {
+/* CONTAINER UTAMA (Pusatkan skrin login, menu, lobby) */
+.container {
     display: flex;
     flex-direction: column;
-    align-items: center;    /* Center secara mendatar */
-    justify-content: center; /* Center secara menegak */
+    align-items: center;
+    justify-content: center;
     min-height: 100vh;
-    text-align: center;      /* Pastikan teks di dalam pun center */
+    width: 100%;
+    max-width: 400px; /* Saiz kotak menu */
     padding: 20px;
     box-sizing: border-box;
+    text-align: center;
 }
 
-/* Betulkan Tajuk WORD SEARCH */
-h1 {
-    font-size: 3rem;
-    margin-bottom: 40px;
-    color: #fff;
+/* Tajuk Neon */
+h1, h2, h3 {
     text-transform: uppercase;
-    letter-spacing: 5px;
-    /* Efek Neon Flicker */
-    text-shadow: 
-        0 0 5px #fff,
-        0 0 10px #fff,
-        0 0 20px #00f2ff,
-        0 0 40px #00f2ff;
+    letter-spacing: 3px;
+    text-shadow: 0 0 10px #00f2ff;
+    color: #fff;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 30px;
     animation: neon-glow 2s infinite alternate;
 }
 
 @keyframes neon-glow {
-    from { opacity: 1; }
-    to { opacity: 0.8; text-shadow: 0 0 5px #fff, 0 0 15px #00f2ff; }
+    from { opacity: 1; text-shadow: 0 0 10px #00f2ff, 0 0 20px #00f2ff; }
+    to { opacity: 0.8; text-shadow: 0 0 5px #00f2ff, 0 0 10px #00f2ff; }
 }
 
-/* Mode Selector & Buttons */
-.mode-selector {
+/* Menu Grid & Buttons */
+.menu-grid {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
     width: 100%;
-    max-width: 300px;
 }
 
-.btn-main {
-    padding: 15px 30px;
-    font-size: 1.2rem;
+.btn-main, .btn-menu {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.1rem;
     font-weight: bold;
     background: transparent;
     color: #00f2ff;
     border: 2px solid #00f2ff;
-    border-radius: 10px;
+    border-radius: 12px;
     cursor: pointer;
     transition: 0.3s;
     text-transform: uppercase;
+    box-sizing: border-box;
 }
 
-.btn-main:hover {
+.btn-main:hover, .btn-menu:hover {
     background: #00f2ff;
     color: #000;
-    box-shadow: 0 0 20px #00f2ff;
+    box-shadow: 0 0 15px #00f2ff;
 }
 
-/* Box untuk Multiplayer */
-.p2p-box {
-    margin-top: 30px;
+/* Butang Tutorial (Style Berbeza Sikit) */
+.btn-tutorial {
+    background: transparent;
+    border: 1px dashed #ff00ff;
+    color: #ff00ff;
+    padding: 10px 20px;
+    border-radius: 50px;
+    cursor: pointer;
+    margin-top: 25px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.btn-tutorial:hover {
+    background: #ff00ff;
+    color: #fff;
+    box-shadow: 0 0 15px #ff00ff;
+}
+
+/* Box untuk Multiplayer / Lobby */
+.id-box, .connect-box {
+    width: 100%;
     background: rgba(255, 255, 255, 0.05);
     padding: 20px;
     border-radius: 15px;
     border: 1px solid #333;
-    width: 100%;
-    max-width: 320px;
+    box-sizing: border-box;
+    margin-bottom: 20px;
 }
 
 input {
@@ -90,18 +115,25 @@ input {
     background: #111;
     border: 1px solid #444;
     color: #fff;
-    border-radius: 5px;
+    border-radius: 8px;
     box-sizing: border-box;
     text-align: center;
+    font-size: 1rem;
 }
 
-.btn-sub {
-    width: 100%;
-    padding: 10px;
-    background: #ff00ff;
-    color: #fff;
+.btn-link {
+    background: none;
     border: none;
-    border-radius: 5px;
-    font-weight: bold;
+    color: #888;
+    text-decoration: underline;
     cursor: pointer;
+    margin-top: 15px;
+}
+
+/* Gameplay Screen (Bagi dia lebar sikit) */
+.game-screen {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 10px;
 }
