@@ -78,22 +78,28 @@ createApp({
                     const dc = Math.sign(data.end.c - data.start.c);
                     const steps = Math.max(Math.abs(data.end.r - data.start.r), Math.abs(data.end.c - data.start.c));
 
+                    // EFEK WAVE UNTUK LAWAN
                     for (let i = 0; i <= steps; i++) {
-                        foundCoordinates.value.push({ 
-                            r: data.start.r + (dr * i), 
-                            c: data.start.c + (dc * i) 
-                        });
+                        setTimeout(() => {
+                            foundCoordinates.value.push({ 
+                                r: data.start.r + (dr * i), 
+                                c: data.start.c + (dc * i) 
+                            });
+                        }, i * 70);
                     }
                     
                     foundWords.value.push(data.word);
                     opponentScore.value += 10;
                     playBeep(400, 0.2);
                 }
-                // TERIMA SIGNAL GAMEOVER DARI PEMENANG
+                
                 if (data.type === 'GAMEOVER') {
-                    const won = myScore.value >= opponentScore.value;
-                    playEndSound(won);
-                    showWinner.value = true;
+                    // Delay sikit supaya sempat tengok wave terakhir lawan habis
+                    setTimeout(() => {
+                        const won = myScore.value >= opponentScore.value;
+                        playEndSound(won);
+                        showWinner.value = true;
+                    }, 800);
                 }
             });
         };

@@ -67,26 +67,30 @@ export const useGame = (state) => {
         const dc = Math.sign(e.c - s.c);
         const steps = Math.max(Math.abs(e.r - s.r), Math.abs(e.c - s.c));
 
+        // EFEK WAVE: Masukkan koordinat satu demi satu dengan delay
         for (let i = 0; i <= steps; i++) {
-            state.foundCoordinates.value.push({ 
-                r: s.r + (dr * i), 
-                c: s.c + (dc * i) 
-            });
+            setTimeout(() => {
+                state.foundCoordinates.value.push({ 
+                    r: s.r + (dr * i), 
+                    c: s.c + (dc * i) 
+                });
+            }, i * 70); // 70ms delay setiap huruf untuk kesan "flow"
         }
 
         if (state.foundWords.value.length === state.words.value.length && state.words.value.length > 0) {
             const won = state.myScore.value >= state.opponentScore.value;
-            playEndSound(won);
             
-            // Aktifkan modal pemenang pada device sendiri
-            state.showWinner.value = true;
+            // Delay modal sikit supaya wave sempat habis
+            setTimeout(() => {
+                playEndSound(won);
+                state.showWinner.value = true;
 
-            // Hantar signal tamat ke device lawan
-            if (state.mode.value === 'multi' && window.currentConn) {
-                window.currentConn.send({
-                    type: 'GAMEOVER'
-                });
-            }
+                if (state.mode.value === 'multi' && window.currentConn) {
+                    window.currentConn.send({
+                        type: 'GAMEOVER'
+                    });
+                }
+            }, (steps * 70) + 500);
             
             console.log("Pusingan Tamat");
         }
