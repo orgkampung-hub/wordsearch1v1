@@ -68,6 +68,13 @@
             </template>
         </div>
 
+        <div class="word-list">
+            <span v-for="word in words" :key="word" 
+                  :class="{ 'wordFound': foundWords.includes(word) }">
+                {{ word }}
+            </span>
+        </div>
+
         <div class="grid">
             <div v-for="(row, rIndex) in grid" :key="rIndex" class="grid-row">
                 <div v-for="(char, cIndex) in row" :key="cIndex" 
@@ -80,13 +87,6 @@
                     {{ char }}
                 </div>
             </div>
-        </div>
-
-        <div class="word-list">
-            <span v-for="word in words" :key="word" 
-                  :class="{ 'wordFound': foundWords.includes(word) }">
-                {{ word }}
-            </span>
         </div>
 
         <button @click="exitGame" class="btn-exit">Tamat</button>
